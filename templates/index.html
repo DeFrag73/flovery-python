@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+
+{% block title %}Bloom & Soil — Flower Catalog{% endblock %}
+
+{% block content %}
+<div x-data="catalog()" x-init="init()" class="space-y-6">
+
+  <!-- ── Hero ── -->
+  <div class="relative rounded-2xl overflow-hidden bg-sage px-6 py-10 md:py-14">
+    <!-- Decorative grain overlay -->
+    <div class="absolute inset-0 opacity-20 pointer-events-none"
+         style="background-image:url('data:image/svg+xml,%3Csvg viewBox=\'0 0 200 200\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'n\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.9\' numOctaves=\'4\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23n)\' opacity=\'0.15\'/%3E%3C/svg%3E')"></div>
+    <!-- Decorative circles -->
+    <div class="absolute -top-8 -right-8 w-40 h-40 rounded-full bg-mist/30"></div>
+    <div class="absolute -bottom-10 -left-6 w-28 h-28 rounded-full bg-sage-dark/40"></div>
+
+    <div class="relative">
+      <p class="font-display font-light italic text-cream/80 text-sm tracking-widest uppercase mb-1">Welcome to</p>
+      <h1 class="font-display font-bold text-cream text-3xl md:text-5xl leading-tight">Bloom &amp; Soil</h1>
+      <p class="font-body font-light text-cream/75 mt-2 max-w-sm text-sm md:text-base">
+        A curated collection of flowers, plants, soils, and accessories — grown with intention.
+      </p>
+    </div>
+  </div>
+
+  <!-- ── Category Filter Chips ── -->
+  <div class="flex gap-2 overflow-x-auto pb-1 scrollbar-hide -mx-4 px-4">
+    <template x-for="cat in categories" :key="cat.value">
+      <button
+        @click="setCategory(cat.value)"
+        :class="activeCategory === cat.value
+          ? 'bg-bark text-cream shadow-md scale-105'
+          : 'bg-parchment text-bark/70 hover:bg-mist'"
+        class="flex-shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold transition-all duration-200 whitespace-nowrap">
+        <span x-text="cat.emoji"></span>
+        <span x-text="cat.label"></span>
+      </button>
+    </template>
+  </div>
+
+  <!-- ── Search bar ── -->
+  <div class="relative">
+    <svg xmlns="http://www.w3.org/2000/svg" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-bark/40" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+    </svg>
+    <input
+      x-model="search"
+      type="search"
+      placeholder="Search products…"
+      class="w-full pl-9 pr-4 py-2.5 rounded-xl bg-parchment/70 border border-parchment text-sm text-bark placeholder:text-bark/40 focus:outline-none focus:ring-2 focus:ring-sage transition">
+  </div>
+
+  <!-- ── Loading Skeleton ── -->
+  <div x-show="loading" class="grid grid-cols-2 md:grid-cols-3 gap-4">
+    <template x-for="i in 6">
+      <div class="rounded-2xl overflow-hidden bg-parchment animate-pulse">
+        <div class="aspect-square bg-mist/50"></div>
+        <div class="p-3 space-y-2">
+          <div class="h-3 bg-mist/70 rounded w-3/4"></div>
+          <div class="h-2.5 bg-mist/50 rounded w-1/2"></div>
+        </div>
+      </div>
+    </template>
+  </div>
+
+  <!-- ── Empty State ── -->
+  <div x-show="!loading && filteredProducts.length === 0" class="text-center py-20 space-y-3">
+    <div class="text-5xl">🌱</div>
+    <p class="font-display text-lg text-bark/60">No products found</p>
+    <p class="text-sm text-bark/40" x-show="search || activeCategory !== 'all'">
+      Try a different search or category.
+    </p>
+    <p class="text-sm text-bark/40" x-show="!search && activeCategory === 'all'">
+      The catalog is empty — check back soon!
+    </p>
+  </div>
+
+  <!-- ── Product Grid ── -->
+  <div x-show="!loading && filteredProducts.length > 0"
+       class="grid grid-cols-2 md:grid-cols-3 gap-4">
+    <template x-for="product in filteredProducts" :key="product.id">
+      <a :href="'/catalog/' + product.id"
+         class="group rounded-2xl overflow-hidden bg-white border border-parchment shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+
+        <!-- Image -->
+        <div class="aspect-square bg-parchment relative overflow-hidden">
+          <template x-if="product.images && product.images.length > 0">
+            <img :src="product.images[0]"
+                 :alt="product.title"
+                 loading="lazy"
+                 class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+          </template>
+          <template x-if="!product.images || product.images.length === 0">
+            <div class="w-full h-full flex items-center justify-center text-4xl text-bark/20">🌿</div>
+          </template>
+
+          <!-- Category pill -->
+          <span class="absolute top-2 left-2 bg-bark/70 backdrop-blur-sm text-cream text-[10px] font-semibold px-2 py-0.5 rounded-full capitalize"
+                x-text="product.category"></span>
+
+          <!-- Multi-image indicator -->
+          <span x-show="product.images && product.images.length > 1"
+                class="absolute bottom-2 right-2 bg-bark/60 text-cream text-[10px] px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            <span x-text="product.images.length"></span>
+          </span>
+        </div>
+
+        <!-- Info -->
+        <div class="p-3">
+          <h2 class="font-display font-semibold text-sm md:text-base text-bark line-clamp-1"
+              x-text="product.title"></h2>
+          <p class="font-body text-xs text-bark/55 mt-0.5 line-clamp-2"
+             x-text="product.description"></p>
+        </div>
+      </a>
+    </template>
+  </div>
+
+  <!-- ── Count ── -->
+  <p x-show="!loading && filteredProducts.length > 0"
+     class="text-center text-xs text-bark/40 pb-4"
+     x-text="`Showing ${filteredProducts.length} product${filteredProducts.length !== 1 ? 's' : ''}`">
+  </p>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function catalog() {
+  return {
+    allProducts: [],
+    loading: true,
+    activeCategory: 'all',
+    search: '',
+
+    categories: [
+      { value: 'all',         label: 'All',          emoji: '🌿' },
+      { value: 'flowers',     label: 'Flowers',      emoji: '🌸' },
+      { value: 'soil',        label: 'Soil',         emoji: '🪴' },
+      { value: 'fertilizers', label: 'Fertilizers',  emoji: '🌱' },
+      { value: 'accessories', label: 'Accessories',  emoji: '✂️' },
+    ],
+
+    get filteredProducts() {
+      return this.allProducts.filter(p => {
+        const matchCat = this.activeCategory === 'all' || p.category === this.activeCategory;
+        const q = this.search.toLowerCase().trim();
+        const matchSearch = !q
+          || p.title.toLowerCase().includes(q)
+          || (p.description || '').toLowerCase().includes(q);
+        return matchCat && matchSearch;
+      });
+    },
+
+    async init() {
+      try {
+        const res = await fetch('/api/v1/products');
+        if (!res.ok) throw new Error('Failed to fetch products');
+        const data = await res.json();
+        // Normalize _id → id
+        this.allProducts = (data.products || []).map(p => ({
+          ...p,
+          id: p.id || p._id,
+        }));
+      } catch (e) {
+        console.error(e);
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    setCategory(cat) {
+      this.activeCategory = cat;
+    },
+  };
+}
+</script>
+{% endblock %}

@@ -1,0 +1,50 @@
+version: "3.9"
+
+services:
+
+  # ── FastAPI Application ──────────────────────────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    container_name: flower_catalog_api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      # Override MONGO_URL to use the Docker service name
+      MONGO_URL: mongodb://mongo:27017
+    depends_on:
+      mongo:
+        condition: service_healthy
+    networks:
+      - catalog_net
+
+  # ── MongoDB ───────────────────────────────────────────────────────────────────
+  mongo:
+    image: mongo:7.0
+    container_name: flower_catalog_mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"   # Expose for local tools like Compass (remove in production)
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - catalog_net
+
+volumes:
+  mongo_data:
+    driver: local
+
+networks:
+  catalog_net:
+    driver: bridge

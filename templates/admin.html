@@ -1,0 +1,467 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Panel — Bloom & Soil{% endblock %}
+
+{% block content %}
+<div x-data="adminPanel()" x-init="init()">
+
+  <!-- ── TOKEN GATE ── -->
+  <div x-show="!authenticated"
+       class="min-h-[60vh] flex items-center justify-center">
+    <div class="bg-white border border-parchment rounded-2xl shadow-xl p-8 w-full max-w-sm space-y-5">
+      <div class="text-center">
+        <div class="text-4xl mb-2">🔐</div>
+        <h1 class="font-display font-bold text-xl text-bark">Admin Access</h1>
+        <p class="text-sm text-bark/50 mt-1">Enter your API token to continue</p>
+      </div>
+
+      <div class="space-y-3">
+        <input
+          x-model="tokenInput"
+          type="password"
+          placeholder="X-Admin-Token"
+          @keyup.enter="login()"
+          class="w-full px-4 py-2.5 rounded-xl bg-parchment border border-parchment text-sm text-bark placeholder:text-bark/40 focus:outline-none focus:ring-2 focus:ring-sage">
+
+        <div x-show="authError" class="text-xs text-red-500 text-center" x-text="authError"></div>
+
+        <button @click="login()"
+                class="w-full bg-bark text-cream py-2.5 rounded-xl text-sm font-semibold hover:bg-terracotta transition-colors">
+          Enter Panel
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── ADMIN DASHBOARD ── -->
+  <div x-show="authenticated" class="space-y-8">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="font-display font-bold text-2xl text-bark">Admin Panel</h1>
+        <p class="text-sm text-bark/50 font-light">Manage your product catalog</p>
+      </div>
+      <button @click="logout()"
+              class="text-xs text-bark/50 hover:text-terracotta transition-colors border border-parchment rounded-full px-3 py-1.5">
+        Sign out
+      </button>
+    </div>
+
+    <!-- Toast notification -->
+    <div x-show="toast.visible"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0 translate-y-2"
+         x-transition:enter-end="opacity-100 translate-y-0"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-end="opacity-0"
+         :class="toast.type === 'error' ? 'bg-red-50 border-red-200 text-red-700' : 'bg-sage/20 border-sage/30 text-sage-dark'"
+         class="fixed top-16 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 border rounded-full px-4 py-2 text-sm font-semibold shadow-lg whitespace-nowrap">
+      <span x-text="toast.type === 'error' ? '✗' : '✓'"></span>
+      <span x-text="toast.message"></span>
+    </div>
+
+    <!-- ── Tab Navigation ── -->
+    <div class="flex gap-1 bg-parchment rounded-xl p-1">
+      <button @click="tab = 'products'"
+              :class="tab === 'products' ? 'bg-white shadow text-bark' : 'text-bark/50 hover:text-bark'"
+              class="flex-1 py-2 text-sm font-semibold rounded-lg transition-all">
+        🪴 Products
+      </button>
+      <button @click="tab = 'add'"
+              :class="tab === 'add' ? 'bg-white shadow text-bark' : 'text-bark/50 hover:text-bark'"
+              class="flex-1 py-2 text-sm font-semibold rounded-lg transition-all">
+        ＋ Add New
+      </button>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- TAB: PRODUCT LIST                                      -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <div x-show="tab === 'products'" class="space-y-4">
+
+      <!-- Loading -->
+      <div x-show="loadingProducts" class="space-y-3">
+        <template x-for="i in 4">
+          <div class="h-20 rounded-xl bg-parchment animate-pulse"></div>
+        </template>
+      </div>
+
+      <!-- Empty -->
+      <div x-show="!loadingProducts && products.length === 0" class="text-center py-16 text-bark/40">
+        <div class="text-4xl mb-2">📭</div>
+        <p>No products yet. Add one!</p>
+      </div>
+
+      <!-- Product rows -->
+      <div x-show="!loadingProducts" class="space-y-3">
+        <template x-for="p in products" :key="p.id">
+          <div class="flex items-center gap-3 bg-white border border-parchment rounded-xl p-3 group hover:border-sage/50 transition-colors">
+
+            <!-- Thumb -->
+            <div class="w-14 h-14 flex-shrink-0 rounded-lg overflow-hidden bg-parchment">
+              <template x-if="p.images && p.images.length > 0">
+                <img :src="p.images[0]" :alt="p.title" class="w-full h-full object-cover">
+              </template>
+              <template x-if="!p.images || p.images.length === 0">
+                <div class="w-full h-full flex items-center justify-center text-xl text-bark/20">🌿</div>
+              </template>
+            </div>
+
+            <!-- Info -->
+            <div class="flex-1 min-w-0">
+              <p class="font-display font-semibold text-sm text-bark truncate" x-text="p.title"></p>
+              <p class="text-xs text-bark/50 capitalize mt-0.5" x-text="p.category"></p>
+              <p class="text-xs text-bark/40 truncate" x-text="(p.images || []).length + ' image(s)'"></p>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex gap-2 flex-shrink-0">
+              <a :href="'/catalog/' + p.id" target="_blank"
+                 class="w-8 h-8 rounded-lg bg-parchment hover:bg-sage/20 flex items-center justify-center transition-colors" title="View">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-bark/60" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.964-7.178z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+              </a>
+              <button @click="confirmDelete(p)"
+                      class="w-8 h-8 rounded-lg bg-parchment hover:bg-red-50 flex items-center justify-center transition-colors group/del" title="Delete">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-bark/40 group-hover/del:text-red-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </template>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- TAB: ADD PRODUCT FORM                                  -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <div x-show="tab === 'add'" class="space-y-5">
+      <div class="bg-white border border-parchment rounded-2xl p-5 space-y-4">
+
+        <!-- Title -->
+        <div class="space-y-1">
+          <label class="text-xs font-semibold text-bark/60 uppercase tracking-wider">Title *</label>
+          <input x-model="form.title" type="text" placeholder="e.g. Red Rose"
+                 class="w-full px-3 py-2.5 rounded-xl bg-parchment/60 border border-parchment text-sm text-bark placeholder:text-bark/40 focus:outline-none focus:ring-2 focus:ring-sage">
+        </div>
+
+        <!-- Category -->
+        <div class="space-y-1">
+          <label class="text-xs font-semibold text-bark/60 uppercase tracking-wider">Category *</label>
+          <select x-model="form.category"
+                  class="w-full px-3 py-2.5 rounded-xl bg-parchment/60 border border-parchment text-sm text-bark focus:outline-none focus:ring-2 focus:ring-sage appearance-none">
+            <option value="">Select category…</option>
+            <option value="flowers">🌸 Flowers</option>
+            <option value="soil">🪴 Soil</option>
+            <option value="fertilizers">🌱 Fertilizers</option>
+            <option value="accessories">✂️ Accessories</option>
+          </select>
+        </div>
+
+        <!-- Description -->
+        <div class="space-y-1">
+          <label class="text-xs font-semibold text-bark/60 uppercase tracking-wider">Description *</label>
+          <textarea x-model="form.description" rows="3" placeholder="Describe the product…"
+                    class="w-full px-3 py-2.5 rounded-xl bg-parchment/60 border border-parchment text-sm text-bark placeholder:text-bark/40 focus:outline-none focus:ring-2 focus:ring-sage resize-none"></textarea>
+        </div>
+
+        <!-- Care Notes -->
+        <div class="space-y-1">
+          <label class="text-xs font-semibold text-bark/60 uppercase tracking-wider">Care Notes <span class="text-bark/30 font-light normal-case">(optional)</span></label>
+          <textarea x-model="form.care_notes" rows="2" placeholder="Watering, sunlight, tips…"
+                    class="w-full px-3 py-2.5 rounded-xl bg-parchment/60 border border-parchment text-sm text-bark placeholder:text-bark/40 focus:outline-none focus:ring-2 focus:ring-sage resize-none"></textarea>
+        </div>
+
+        <!-- ── Image Upload ── -->
+        <div class="space-y-2">
+          <label class="text-xs font-semibold text-bark/60 uppercase tracking-wider">Images</label>
+
+          <!-- Drop zone -->
+          <label
+            for="imageInput"
+            class="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-parchment rounded-xl p-6 cursor-pointer hover:border-sage hover:bg-parchment/30 transition-colors text-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 text-bark/30" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"/>
+            </svg>
+            <span class="text-sm text-bark/50">Tap to select photos</span>
+            <span class="text-xs text-bark/30">JPG, PNG, WEBP — multiple OK</span>
+            <input id="imageInput" type="file" multiple accept="image/*" class="hidden"
+                   @change="handleFileSelect($event)">
+          </label>
+
+          <!-- Preview thumbnails -->
+          <div x-show="selectedFiles.length > 0" class="flex gap-2 flex-wrap mt-2">
+            <template x-for="(preview, i) in selectedFiles" :key="i">
+              <div class="relative w-14 h-14 rounded-lg overflow-hidden bg-parchment border border-parchment">
+                <img :src="preview.url" class="w-full h-full object-cover">
+                <button @click="removeFile(i)"
+                        class="absolute top-0.5 right-0.5 w-4 h-4 bg-bark/70 text-cream rounded-full text-[9px] flex items-center justify-center hover:bg-terracotta transition-colors">✕</button>
+              </div>
+            </template>
+          </div>
+        </div>
+
+        <!-- Upload progress indicator -->
+        <div x-show="uploadStatus !== ''" class="space-y-2">
+          <div class="flex items-center gap-2 text-sm">
+            <div x-show="submitting" class="w-4 h-4 border-2 border-sage border-t-transparent rounded-full animate-spin"></div>
+            <span :class="uploadStatus.includes('Error') ? 'text-red-500' : 'text-sage-dark'"
+                  x-text="uploadStatus" class="text-sm font-medium"></span>
+          </div>
+          <div x-show="submitting" class="h-1.5 bg-parchment rounded-full overflow-hidden">
+            <div class="h-full bg-sage rounded-full animate-pulse" style="width:60%"></div>
+          </div>
+        </div>
+
+        <!-- Submit -->
+        <button @click="submitProduct()"
+                :disabled="submitting"
+                class="w-full bg-terracotta text-cream py-3 rounded-xl text-sm font-bold tracking-wide hover:bg-terra-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-md">
+          <div x-show="submitting" class="w-4 h-4 border-2 border-cream border-t-transparent rounded-full animate-spin"></div>
+          <span x-text="submitting ? 'Saving…' : '✦ Save Product'"></span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ── Delete Confirmation Modal ── -->
+    <div x-show="deleteTarget"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         class="fixed inset-0 bg-bark/50 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-4">
+      <div @click.stop
+           class="bg-white rounded-2xl p-6 w-full max-w-sm space-y-4 shadow-2xl">
+        <div class="text-center">
+          <div class="text-3xl mb-2">🗑️</div>
+          <h3 class="font-display font-bold text-bark">Delete product?</h3>
+          <p class="text-sm text-bark/60 mt-1" x-text="'&quot;' + (deleteTarget?.title || '') + '&quot; will be permanently removed.'"></p>
+        </div>
+        <div class="flex gap-3">
+          <button @click="deleteTarget = null"
+                  class="flex-1 py-2.5 rounded-xl border border-parchment text-sm text-bark/70 hover:bg-parchment transition-colors font-semibold">
+            Cancel
+          </button>
+          <button @click="deleteProduct()"
+                  :disabled="deleting"
+                  class="flex-1 py-2.5 rounded-xl bg-red-500 text-white text-sm font-bold hover:bg-red-600 transition-colors disabled:opacity-50">
+            <span x-text="deleting ? 'Deleting…' : 'Delete'"></span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function adminPanel() {
+  return {
+    authenticated: false,
+    tokenInput: '',
+    token: '',
+    authError: '',
+
+    tab: 'products',
+    products: [],
+    loadingProducts: false,
+
+    form: { title: '', category: '', description: '', care_notes: '' },
+    selectedFiles: [],        // [{file, url}]
+    submitting: false,
+    uploadStatus: '',
+
+    deleteTarget: null,
+    deleting: false,
+
+    toast: { visible: false, message: '', type: 'success', _timer: null },
+
+    // ── Auth ──────────────────────────────────────────────────────────────────
+    async init() {
+      const saved = localStorage.getItem('bloom_admin_token');
+      if (saved) {
+        this.token = saved;
+        const ok = await this.verifyToken(saved);
+        if (ok) this.authenticated = true;
+        else { localStorage.removeItem('bloom_admin_token'); }
+      }
+    },
+
+    async verifyToken(t) {
+      try {
+        const res = await fetch('/api/v1/admin/products', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Admin-Token': t },
+          body: JSON.stringify({ title: '_verify_', description: '_', category: 'flowers' }),
+        });
+        // 422 = validation error = token is valid (wrong data is fine for verification)
+        // 401 = invalid token
+        return res.status !== 401;
+      } catch { return false; }
+    },
+
+    async login() {
+      this.authError = '';
+      if (!this.tokenInput.trim()) { this.authError = 'Please enter a token.'; return; }
+      const ok = await this.verifyToken(this.tokenInput);
+      if (ok) {
+        this.token = this.tokenInput;
+        localStorage.setItem('bloom_admin_token', this.token);
+        this.authenticated = true;
+        this.loadProducts();
+      } else {
+        this.authError = 'Invalid token. Please try again.';
+      }
+    },
+
+    logout() {
+      localStorage.removeItem('bloom_admin_token');
+      this.authenticated = false;
+      this.token = '';
+      this.tokenInput = '';
+    },
+
+    // ── Products ──────────────────────────────────────────────────────────────
+    async loadProducts() {
+      this.loadingProducts = true;
+      try {
+        const res = await fetch('/api/v1/products');
+        const data = await res.json();
+        this.products = (data.products || []).map(p => ({ ...p, id: p.id || p._id }));
+      } catch(e) { this.showToast('Failed to load products', 'error'); }
+      finally { this.loadingProducts = false; }
+    },
+
+    // ── File Selection ────────────────────────────────────────────────────────
+    handleFileSelect(event) {
+      const files = Array.from(event.target.files);
+      files.forEach(file => {
+        const url = URL.createObjectURL(file);
+        this.selectedFiles.push({ file, url });
+      });
+      event.target.value = ''; // allow re-selecting same file
+    },
+
+    removeFile(index) {
+      URL.revokeObjectURL(this.selectedFiles[index].url);
+      this.selectedFiles.splice(index, 1);
+    },
+
+    // ── Submit Product (two-step) ─────────────────────────────────────────────
+    async submitProduct() {
+      if (!this.form.title.trim()) { this.showToast('Title is required', 'error'); return; }
+      if (!this.form.category) { this.showToast('Category is required', 'error'); return; }
+      if (!this.form.description.trim()) { this.showToast('Description is required', 'error'); return; }
+
+      this.submitting = true;
+      this.uploadStatus = '';
+
+      let imageUrls = [];
+
+      // Step 1: Upload images to Cloudinary
+      if (this.selectedFiles.length > 0) {
+        this.uploadStatus = `Uploading ${this.selectedFiles.length} image(s) to Cloudinary…`;
+        try {
+          const fd = new FormData();
+          this.selectedFiles.forEach(sf => fd.append('files', sf.file));
+          const uploadRes = await fetch('/api/v1/admin/upload', {
+            method: 'POST',
+            headers: { 'X-Admin-Token': this.token },
+            body: fd,
+          });
+          if (!uploadRes.ok) {
+            const err = await uploadRes.json();
+            throw new Error(err.detail || 'Upload failed');
+          }
+          const uploadData = await uploadRes.json();
+          imageUrls = uploadData.urls || [];
+          this.uploadStatus = `✓ Uploaded ${imageUrls.length} image(s). Saving product…`;
+        } catch(e) {
+          this.uploadStatus = `Error: ${e.message}`;
+          this.showToast(e.message, 'error');
+          this.submitting = false;
+          return;
+        }
+      } else {
+        this.uploadStatus = 'Saving product…';
+      }
+
+      // Step 2: Create the product
+      try {
+        const payload = {
+          title:       this.form.title.trim(),
+          category:    this.form.category,
+          description: this.form.description.trim(),
+          images:      imageUrls,
+          ...(this.form.care_notes.trim() ? { care_notes: this.form.care_notes.trim() } : {}),
+        };
+
+        const res = await fetch('/api/v1/admin/products', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Admin-Token': this.token,
+          },
+          body: JSON.stringify(payload),
+        });
+
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.detail || 'Failed to create product');
+        }
+
+        // Success — reset form
+        this.form = { title: '', category: '', description: '', care_notes: '' };
+        this.selectedFiles.forEach(sf => URL.revokeObjectURL(sf.url));
+        this.selectedFiles = [];
+        this.uploadStatus = '';
+        this.showToast('Product created successfully!', 'success');
+        this.tab = 'products';
+        await this.loadProducts();
+
+      } catch(e) {
+        this.uploadStatus = `Error: ${e.message}`;
+        this.showToast(e.message, 'error');
+      } finally {
+        this.submitting = false;
+      }
+    },
+
+    // ── Delete ────────────────────────────────────────────────────────────────
+    confirmDelete(product) {
+      this.deleteTarget = product;
+    },
+
+    async deleteProduct() {
+      if (!this.deleteTarget) return;
+      this.deleting = true;
+      try {
+        const res = await fetch(`/api/v1/admin/products/${this.deleteTarget.id}`, {
+          method: 'DELETE',
+          headers: { 'X-Admin-Token': this.token },
+        });
+        if (!res.ok) throw new Error('Delete failed');
+        this.showToast('Product deleted', 'success');
+        this.deleteTarget = null;
+        await this.loadProducts();
+      } catch(e) {
+        this.showToast(e.message, 'error');
+      } finally {
+        this.deleting = false;
+      }
+    },
+
+    // ── Toast ─────────────────────────────────────────────────────────────────
+    showToast(message, type = 'success') {
+      clearTimeout(this.toast._timer);
+      this.toast = { visible: true, message, type, _timer: null };
+      this.toast._timer = setTimeout(() => { this.toast.visible = false; }, 3000);
+    },
+  };
+}
+</script>
+{% endblock %}
