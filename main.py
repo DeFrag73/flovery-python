@@ -63,5 +63,3 @@ app.include_router(admin.router, prefix=API_PREFIX)
 @app.get("/health", tags=["Health"])
 async def health_check():
     return {"status": "ok", "service": "flower-catalog-api"}
-#todo fix admin panel authentication
-#todo fix modal for delete product

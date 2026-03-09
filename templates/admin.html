@@ -1,18 +1,17 @@
 {% extends "base.html" %}
 
-{% block title %}Admin Panel — Bloom & Soil{% endblock %}
+{% block title %}Адмін-панель — Bloom & Soil{% endblock %}
 
 {% block content %}
 <div x-data="adminPanel()" x-init="init()">
 
-  <!-- ── TOKEN GATE ── -->
   <div x-show="!authenticated"
        class="min-h-[60vh] flex items-center justify-center">
     <div class="bg-white border border-parchment rounded-2xl shadow-xl p-8 w-full max-w-sm space-y-5">
       <div class="text-center">
         <div class="text-4xl mb-2">🔐</div>
-        <h1 class="font-display font-bold text-xl text-bark">Admin Access</h1>
-        <p class="text-sm text-bark/50 mt-1">Enter your API token to continue</p>
+        <h1 class="font-display font-bold text-xl text-bark">Доступ адміністратора</h1>
+        <p class="text-sm text-bark/50 mt-1">Введіть ваш API-токен для продовження</p>
       </div>
 
       <div class="space-y-3">
@@ -27,28 +26,25 @@
 
         <button @click="login()"
                 class="w-full bg-bark text-cream py-2.5 rounded-xl text-sm font-semibold hover:bg-terracotta transition-colors">
-          Enter Panel
+          Увійти
         </button>
       </div>
     </div>
   </div>
 
-  <!-- ── ADMIN DASHBOARD ── -->
   <div x-show="authenticated" class="space-y-8">
 
-    <!-- Header -->
     <div class="flex items-center justify-between">
       <div>
-        <h1 class="font-display font-bold text-2xl text-bark">Admin Panel</h1>
-        <p class="text-sm text-bark/50 font-light">Manage your product catalog</p>
+        <h1 class="font-display font-bold text-2xl text-bark">Адмін-панель</h1>
+        <p class="text-sm text-bark/50 font-light">Керування каталогом товарів</p>
       </div>
       <button @click="logout()"
               class="text-xs text-bark/50 hover:text-terracotta transition-colors border border-parchment rounded-full px-3 py-1.5">
-        Sign out
+        Вийти
       </button>
     </div>
 
-    <!-- Toast notification -->
     <div x-show="toast.visible"
          x-transition:enter="transition ease-out duration-200"
          x-transition:enter-start="opacity-0 translate-y-2"
@@ -61,44 +57,36 @@
       <span x-text="toast.message"></span>
     </div>
 
-    <!-- ── Tab Navigation ── -->
     <div class="flex gap-1 bg-parchment rounded-xl p-1">
       <button @click="tab = 'products'"
               :class="tab === 'products' ? 'bg-white shadow text-bark' : 'text-bark/50 hover:text-bark'"
               class="flex-1 py-2 text-sm font-semibold rounded-lg transition-all">
-        🪴 Products
+        🪴 Товари
       </button>
       <button @click="tab = 'add'"
               :class="tab === 'add' ? 'bg-white shadow text-bark' : 'text-bark/50 hover:text-bark'"
               class="flex-1 py-2 text-sm font-semibold rounded-lg transition-all">
-        ＋ Add New
+        ＋ Додати новий
       </button>
     </div>
 
-    <!-- ═══════════════════════════════════════════════════════ -->
-    <!-- TAB: PRODUCT LIST                                      -->
-    <!-- ═══════════════════════════════════════════════════════ -->
     <div x-show="tab === 'products'" class="space-y-4">
 
-      <!-- Loading -->
       <div x-show="loadingProducts" class="space-y-3">
         <template x-for="i in 4">
           <div class="h-20 rounded-xl bg-parchment animate-pulse"></div>
         </template>
       </div>
 
-      <!-- Empty -->
       <div x-show="!loadingProducts && products.length === 0" class="text-center py-16 text-bark/40">
         <div class="text-4xl mb-2">📭</div>
-        <p>No products yet. Add one!</p>
+        <p>Товарів ще немає. Додайте перший!</p>
       </div>
 
-      <!-- Product rows -->
       <div x-show="!loadingProducts" class="space-y-3">
         <template x-for="p in products" :key="p.id">
           <div class="flex items-center gap-3 bg-white border border-parchment rounded-xl p-3 group hover:border-sage/50 transition-colors">
 
-            <!-- Thumb -->
             <div class="w-14 h-14 flex-shrink-0 rounded-lg overflow-hidden bg-parchment">
               <template x-if="p.images && p.images.length > 0">
                 <img :src="p.images[0]" :alt="p.title" class="w-full h-full object-cover">
@@ -108,36 +96,33 @@
               </template>
             </div>
 
-            <!-- Info -->
-                <div class="flex-1 min-w-0">
-                  <div class="flex items-center gap-2">
-                    <p class="font-display font-semibold text-sm text-bark truncate" x-text="p.title"></p>
-                    <span x-show="p.is_active === false"
-                          class="flex-shrink-0 text-[10px] font-bold uppercase tracking-wider text-bark/40 bg-parchment px-2 py-0.5 rounded-full">
-                      Inactive
-                    </span>
-                  </div>
-                  <p class="text-xs text-bark/50 capitalize mt-0.5" x-text="p.category"></p>
-                  <p class="text-xs text-bark/40 truncate" x-text="(p.images || []).length + ' image(s)'"></p>
-                </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2">
+                <p class="font-display font-semibold text-sm text-bark truncate" x-text="p.title"></p>
+                <span x-show="p.is_active === false"
+                      class="flex-shrink-0 text-[10px] font-bold uppercase tracking-wider text-bark/40 bg-parchment px-2 py-0.5 rounded-full">
+                  Неактивний
+                </span>
+              </div>
+              <p class="text-xs text-bark/50 capitalize mt-0.5" x-text="p.category === 'flowers' ? 'квіти' : p.category === 'soil' ? 'ґрунт' : p.category === 'fertilizers' ? 'добрива' : 'аксесуари'"></p>
+              <p class="text-xs text-bark/40 truncate" x-text="(p.images || []).length + ' зображень'"></p>
+            </div>
 
-            <!-- Actions -->
-                <div class="flex gap-2 flex-shrink-0">
-                  <!-- Toggle active -->
-                  <button @click="toggleActive(p)"
-                          :class="p.is_active !== false ? 'bg-sage/20 hover:bg-sage/30' : 'bg-parchment hover:bg-yellow-50'"
-                          class="w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
-                          :title="p.is_active !== false ? 'Deactivate' : 'Activate'">
-                    <span x-text="p.is_active !== false ? '👁️' : '🙈'" class="text-sm"></span>
-                  </button>
-                  <a :href="'/catalog/' + p.id" target="_blank"
-                 class="w-8 h-8 rounded-lg bg-parchment hover:bg-sage/20 flex items-center justify-center transition-colors" title="View">
+            <div class="flex gap-2 flex-shrink-0">
+              <button @click="toggleActive(p)"
+                      :class="p.is_active !== false ? 'bg-sage/20 hover:bg-sage/30' : 'bg-parchment hover:bg-yellow-50'"
+                      class="w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
+                      :title="p.is_active !== false ? 'Деактивувати' : 'Активувати'">
+                <span x-text="p.is_active !== false ? '👁️' : '🙈'" class="text-sm"></span>
+              </button>
+              <a :href="'/catalog/' + p.id" target="_blank"
+                 class="w-8 h-8 rounded-lg bg-parchment hover:bg-sage/20 flex items-center justify-center transition-colors" title="Переглянути">
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-bark/60" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.964-7.178z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                 </svg>
               </a>
               <button @click="confirmDelete(p)"
-                      class="w-8 h-8 rounded-lg bg-parchment hover:bg-red-50 flex items-center justify-center transition-colors group/del" title="Delete">
+                      class="w-8 h-8 rounded-lg bg-parchment hover:bg-red-50 flex items-center justify-center transition-colors group/del" title="Видалити">
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-bark/40 group-hover/del:text-red-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/>
                 </svg>
@@ -148,64 +133,54 @@
       </div>
     </div>
 
-    <!-- ═══════════════════════════════════════════════════════ -->
-    <!-- TAB: ADD PRODUCT FORM                                  -->
-    <!-- ═══════════════════════════════════════════════════════ -->
     <div x-show="tab === 'add'" class="space-y-5">
       <div class="bg-white border border-parchment rounded-2xl p-5 space-y-4">
 
-        <!-- Title -->
         <div class="space-y-1">
-          <label class="text-xs font-semibold text-bark/60 uppercase tracking-wider">Title *</label>
-          <input x-model="form.title" type="text" placeholder="e.g. Red Rose"
+          <label class="text-xs font-semibold text-bark/60 uppercase tracking-wider">Назва *</label>
+          <input x-model="form.title" type="text" placeholder="напр. Червона троянда"
                  class="w-full px-3 py-2.5 rounded-xl bg-parchment/60 border border-parchment text-sm text-bark placeholder:text-bark/40 focus:outline-none focus:ring-2 focus:ring-sage">
         </div>
 
-        <!-- Category -->
         <div class="space-y-1">
-          <label class="text-xs font-semibold text-bark/60 uppercase tracking-wider">Category *</label>
+          <label class="text-xs font-semibold text-bark/60 uppercase tracking-wider">Категорія *</label>
           <select x-model="form.category"
                   class="w-full px-3 py-2.5 rounded-xl bg-parchment/60 border border-parchment text-sm text-bark focus:outline-none focus:ring-2 focus:ring-sage appearance-none">
-            <option value="">Select category…</option>
-            <option value="flowers">🌸 Flowers</option>
-            <option value="soil">🪴 Soil</option>
-            <option value="fertilizers">🌱 Fertilizers</option>
-            <option value="accessories">✂️ Accessories</option>
+            <option value="">Оберіть категорію…</option>
+            <option value="flowers">🌸 Квіти</option>
+            <option value="soil">🪴 Ґрунт</option>
+            <option value="fertilizers">🌱 Добрива</option>
+            <option value="accessories">✂️ Аксесуари</option>
           </select>
         </div>
 
-        <!-- Description -->
         <div class="space-y-1">
-          <label class="text-xs font-semibold text-bark/60 uppercase tracking-wider">Description *</label>
-          <textarea x-model="form.description" rows="3" placeholder="Describe the product…"
+          <label class="text-xs font-semibold text-bark/60 uppercase tracking-wider">Опис *</label>
+          <textarea x-model="form.description" rows="3" placeholder="Опишіть товар…"
                     class="w-full px-3 py-2.5 rounded-xl bg-parchment/60 border border-parchment text-sm text-bark placeholder:text-bark/40 focus:outline-none focus:ring-2 focus:ring-sage resize-none"></textarea>
         </div>
 
-        <!-- Care Notes -->
         <div class="space-y-1">
-          <label class="text-xs font-semibold text-bark/60 uppercase tracking-wider">Care Notes <span class="text-bark/30 font-light normal-case">(optional)</span></label>
-          <textarea x-model="form.care_notes" rows="2" placeholder="Watering, sunlight, tips…"
+          <label class="text-xs font-semibold text-bark/60 uppercase tracking-wider">Інструкції з догляду <span class="text-bark/30 font-light normal-case">(необов'язково)</span></label>
+          <textarea x-model="form.care_notes" rows="2" placeholder="Полив, сонячне світло, поради…"
                     class="w-full px-3 py-2.5 rounded-xl bg-parchment/60 border border-parchment text-sm text-bark placeholder:text-bark/40 focus:outline-none focus:ring-2 focus:ring-sage resize-none"></textarea>
         </div>
 
-        <!-- ── Image Upload ── -->
         <div class="space-y-2">
-          <label class="text-xs font-semibold text-bark/60 uppercase tracking-wider">Images</label>
+          <label class="text-xs font-semibold text-bark/60 uppercase tracking-wider">Зображення</label>
 
-          <!-- Drop zone -->
           <label
             for="imageInput"
             class="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-parchment rounded-xl p-6 cursor-pointer hover:border-sage hover:bg-parchment/30 transition-colors text-center">
             <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 text-bark/30" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
               <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"/>
             </svg>
-            <span class="text-sm text-bark/50">Tap to select photos</span>
-            <span class="text-xs text-bark/30">JPG, PNG, WEBP — multiple OK</span>
+            <span class="text-sm text-bark/50">Натисніть, щоб обрати фото</span>
+            <span class="text-xs text-bark/30">JPG, PNG, WEBP — можна декілька</span>
             <input id="imageInput" type="file" multiple accept="image/*" class="hidden"
                    @change="handleFileSelect($event)">
           </label>
 
-          <!-- Preview thumbnails -->
           <div x-show="selectedFiles.length > 0" class="flex gap-2 flex-wrap mt-2">
             <template x-for="(preview, i) in selectedFiles" :key="i">
               <div class="relative w-14 h-14 rounded-lg overflow-hidden bg-parchment border border-parchment">
@@ -217,11 +192,10 @@
           </div>
         </div>
 
-        <!-- Upload progress indicator -->
         <div x-show="uploadStatus !== ''" class="space-y-2">
           <div class="flex items-center gap-2 text-sm">
             <div x-show="submitting" class="w-4 h-4 border-2 border-sage border-t-transparent rounded-full animate-spin"></div>
-            <span :class="uploadStatus.includes('Error') ? 'text-red-500' : 'text-sage-dark'"
+            <span :class="uploadStatus.includes('Помилка') ? 'text-red-500' : 'text-sage-dark'"
                   x-text="uploadStatus" class="text-sm font-medium"></span>
           </div>
           <div x-show="submitting" class="h-1.5 bg-parchment rounded-full overflow-hidden">
@@ -229,38 +203,44 @@
           </div>
         </div>
 
-        <!-- Submit -->
         <button @click="submitProduct()"
                 :disabled="submitting"
                 class="w-full bg-terracotta text-cream py-3 rounded-xl text-sm font-bold tracking-wide hover:bg-terra-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-md">
           <div x-show="submitting" class="w-4 h-4 border-2 border-cream border-t-transparent rounded-full animate-spin"></div>
-          <span x-text="submitting ? 'Saving…' : '✦ Save Product'"></span>
+          <span x-text="submitting ? 'Збереження…' : '✦ Зберегти товар'"></span>
         </button>
       </div>
     </div>
 
-    <!-- ── Delete Confirmation Modal ── -->
     <div x-show="deleteTarget"
+         style="display: none;"
          x-transition:enter="transition ease-out duration-200"
          x-transition:enter-start="opacity-0"
          x-transition:enter-end="opacity-100"
-         class="fixed inset-0 bg-bark/50 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-4">
+         class="fixed inset-0 bg-bark/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+
       <div @click.stop
+           x-show="deleteTarget"
+           x-transition:enter="transition ease-out duration-300 delay-75"
+           x-transition:enter-start="opacity-0 translate-y-4"
+           x-transition:enter-end="opacity-100 translate-y-0"
            class="bg-white rounded-2xl p-6 w-full max-w-sm space-y-4 shadow-2xl">
+
         <div class="text-center">
           <div class="text-3xl mb-2">🗑️</div>
-          <h3 class="font-display font-bold text-bark">Delete product?</h3>
-          <p class="text-sm text-bark/60 mt-1" x-text="'&quot;' + (deleteTarget?.title || '') + '&quot; will be permanently removed.'"></p>
+          <h3 class="font-display font-bold text-bark">Видалити товар?</h3>
+          <p class="text-sm text-bark/60 mt-1" x-text="'&quot;' + (deleteTarget?.title || '') + '&quot; буде назавжди видалено.'"></p>
         </div>
+
         <div class="flex gap-3">
           <button @click="deleteTarget = null"
                   class="flex-1 py-2.5 rounded-xl border border-parchment text-sm text-bark/70 hover:bg-parchment transition-colors font-semibold">
-            Cancel
+            Скасувати
           </button>
           <button @click="deleteProduct()"
                   :disabled="deleting"
                   class="flex-1 py-2.5 rounded-xl bg-red-500 text-white text-sm font-bold hover:bg-red-600 transition-colors disabled:opacity-50">
-            <span x-text="deleting ? 'Deleting…' : 'Delete'"></span>
+            <span x-text="deleting ? 'Видалення…' : 'Видалити'"></span>
           </button>
         </div>
       </div>
@@ -284,7 +264,7 @@ function adminPanel() {
     loadingProducts: false,
 
     form: { title: '', category: '', description: '', care_notes: '' },
-    selectedFiles: [],        // [{file, url}]
+    selectedFiles: [],
     submitting: false,
     uploadStatus: '',
 
@@ -299,27 +279,28 @@ function adminPanel() {
       if (saved) {
         this.token = saved;
         const ok = await this.verifyToken(saved);
-        if (ok) this.authenticated = true;
-        else { localStorage.removeItem('bloom_admin_token'); }
+        if (ok) {
+          this.authenticated = true;
+          this.loadProducts();
+        } else {
+          localStorage.removeItem('bloom_admin_token');
+        }
       }
     },
 
     async verifyToken(t) {
       try {
-        const res = await fetch('/api/v1/admin/products', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'X-Admin-Token': t },
-          body: JSON.stringify({ title: '_verify_', description: '_', category: 'flowers' }),
+        const res = await fetch('/api/v1/admin/products?page_size=1', {
+          method: 'GET',
+          headers: { 'X-Admin-Token': t },
         });
-        // 422 = validation error = token is valid (wrong data is fine for verification)
-        // 401 = invalid token
         return res.status !== 401;
       } catch { return false; }
     },
 
     async login() {
       this.authError = '';
-      if (!this.tokenInput.trim()) { this.authError = 'Please enter a token.'; return; }
+      if (!this.tokenInput.trim()) { this.authError = 'Будь ласка, введіть токен.'; return; }
       const ok = await this.verifyToken(this.tokenInput);
       if (ok) {
         this.token = this.tokenInput;
@@ -327,7 +308,7 @@ function adminPanel() {
         this.authenticated = true;
         this.loadProducts();
       } else {
-        this.authError = 'Invalid token. Please try again.';
+        this.authError = 'Недійсний токен. Спробуйте ще раз.';
       }
     },
 
@@ -339,40 +320,38 @@ function adminPanel() {
     },
 
     // ── Products ──────────────────────────────────────────────────────────────
-        async loadProducts() {
-          this.loadingProducts = true;
-          try {
-            const res = await fetch('/api/v1/admin/products', {
-              headers: { 'X-Admin-Token': this.token },
-            });
-            const data = await res.json();
-            this.products = (data.products || []).map(p => ({ ...p, id: p.id || p._id }));
-          } catch(e) { this.showToast('Failed to load products', 'error'); }
-          finally { this.loadingProducts = false; }
-        },
+    async loadProducts() {
+      this.loadingProducts = true;
+      try {
+        const res = await fetch('/api/v1/admin/products', {
+          headers: { 'X-Admin-Token': this.token },
+        });
+        const data = await res.json();
+        this.products = (data.products || []).map(p => ({ ...p, id: p.id || p._id }));
+      } catch(e) { this.showToast('Не вдалося завантажити товари', 'error'); }
+      finally { this.loadingProducts = false; }
+    },
 
-        // ── Toggle Active ─────────────────────────────────────────────────────────
-        async toggleActive(product) {
-          try {
-            const res = await fetch(`/api/v1/admin/products/${product.id}/toggle-active`, {
-              method: 'PATCH',
-              headers: { 'X-Admin-Token': this.token },
-            });
-            if (!res.ok) throw new Error('Failed to toggle status');
-            const updated = await res.json();
-            // Update in-place
-            const idx = this.products.findIndex(p => p.id === product.id);
-            if (idx !== -1) {
-              this.products[idx] = { ...updated, id: updated.id || updated._id };
-            }
-            this.showToast(
-              updated.is_active ? 'Product activated' : 'Product deactivated',
-              'success'
-            );
-          } catch(e) {
-            this.showToast(e.message, 'error');
-          }
-        },
+    async toggleActive(product) {
+      try {
+        const res = await fetch(`/api/v1/admin/products/${product.id}/toggle-active`, {
+          method: 'PATCH',
+          headers: { 'X-Admin-Token': this.token },
+        });
+        if (!res.ok) throw new Error('Не вдалося змінити статус');
+        const updated = await res.json();
+        const idx = this.products.findIndex(p => p.id === product.id);
+        if (idx !== -1) {
+          this.products[idx] = { ...updated, id: updated.id || updated._id };
+        }
+        this.showToast(
+          updated.is_active ? 'Товар активовано' : 'Товар деактивовано',
+          'success'
+        );
+      } catch(e) {
+        this.showToast(e.message, 'error');
+      }
+    },
 
     // ── File Selection ────────────────────────────────────────────────────────
     handleFileSelect(event) {
@@ -381,7 +360,7 @@ function adminPanel() {
         const url = URL.createObjectURL(file);
         this.selectedFiles.push({ file, url });
       });
-      event.target.value = ''; // allow re-selecting same file
+      event.target.value = '';
     },
 
     removeFile(index) {
@@ -389,20 +368,19 @@ function adminPanel() {
       this.selectedFiles.splice(index, 1);
     },
 
-    // ── Submit Product (two-step) ─────────────────────────────────────────────
+    // ── Submit Product ────────────────────────────────────────────────────────
     async submitProduct() {
-      if (!this.form.title.trim()) { this.showToast('Title is required', 'error'); return; }
-      if (!this.form.category) { this.showToast('Category is required', 'error'); return; }
-      if (!this.form.description.trim()) { this.showToast('Description is required', 'error'); return; }
+      if (!this.form.title.trim()) { this.showToast('Назва є обов\'язковою', 'error'); return; }
+      if (!this.form.category) { this.showToast('Категорія є обов\'язковою', 'error'); return; }
+      if (!this.form.description.trim()) { this.showToast('Опис є обов\'язковим', 'error'); return; }
 
       this.submitting = true;
       this.uploadStatus = '';
 
       let imageUrls = [];
 
-      // Step 1: Upload images to Cloudinary
       if (this.selectedFiles.length > 0) {
-        this.uploadStatus = `Uploading ${this.selectedFiles.length} image(s) to Cloudinary…`;
+        this.uploadStatus = `Завантаження ${this.selectedFiles.length} зображень...`;
         try {
           const fd = new FormData();
           this.selectedFiles.forEach(sf => fd.append('files', sf.file));
@@ -413,22 +391,21 @@ function adminPanel() {
           });
           if (!uploadRes.ok) {
             const err = await uploadRes.json();
-            throw new Error(err.detail || 'Upload failed');
+            throw new Error(err.detail || 'Помилка завантаження фото');
           }
           const uploadData = await uploadRes.json();
           imageUrls = uploadData.urls || [];
-          this.uploadStatus = `✓ Uploaded ${imageUrls.length} image(s). Saving product…`;
+          this.uploadStatus = `✓ Завантажено ${imageUrls.length} зображень. Збереження товару…`;
         } catch(e) {
-          this.uploadStatus = `Error: ${e.message}`;
+          this.uploadStatus = `Помилка: ${e.message}`;
           this.showToast(e.message, 'error');
           this.submitting = false;
           return;
         }
       } else {
-        this.uploadStatus = 'Saving product…';
+        this.uploadStatus = 'Збереження товару…';
       }
 
-      // Step 2: Create the product
       try {
         const payload = {
           title:       this.form.title.trim(),
@@ -449,20 +426,19 @@ function adminPanel() {
 
         if (!res.ok) {
           const err = await res.json();
-          throw new Error(err.detail || 'Failed to create product');
+          throw new Error(err.detail || 'Не вдалося створити товар');
         }
 
-        // Success — reset form
         this.form = { title: '', category: '', description: '', care_notes: '' };
         this.selectedFiles.forEach(sf => URL.revokeObjectURL(sf.url));
         this.selectedFiles = [];
         this.uploadStatus = '';
-        this.showToast('Product created successfully!', 'success');
+        this.showToast('Товар успішно створено!', 'success');
         this.tab = 'products';
         await this.loadProducts();
 
       } catch(e) {
-        this.uploadStatus = `Error: ${e.message}`;
+        this.uploadStatus = `Помилка: ${e.message}`;
         this.showToast(e.message, 'error');
       } finally {
         this.submitting = false;
@@ -482,8 +458,8 @@ function adminPanel() {
           method: 'DELETE',
           headers: { 'X-Admin-Token': this.token },
         });
-        if (!res.ok) throw new Error('Delete failed');
-        this.showToast('Product deleted', 'success');
+        if (!res.ok) throw new Error('Не вдалося видалити');
+        this.showToast('Товар видалено', 'success');
         this.deleteTarget = null;
         await this.loadProducts();
       } catch(e) {

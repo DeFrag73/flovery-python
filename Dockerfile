@@ -14,7 +14,7 @@ RUN pip install --upgrade pip \
 
 
 # ── Stage 2: production runtime ───────────────────────────────────────────────
-FROM python:3.12-slim AS Flowery
+FROM python:3.12-slim AS flowery
 
 # Create a non-root user for security
 RUN groupadd --gid 1001 appgroup \
