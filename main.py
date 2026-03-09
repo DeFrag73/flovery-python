@@ -63,9 +63,5 @@ app.include_router(admin.router, prefix=API_PREFIX)
 @app.get("/health", tags=["Health"])
 async def health_check():
     return {"status": "ok", "service": "flower-catalog-api"}
-#todo add swipe for scrolling photos
 #todo fix admin panel authentication
 #todo fix modal for delete product
-#todo add active and inactive products
-#todo add pagination for products list
-#todo add enlarge the image on click
