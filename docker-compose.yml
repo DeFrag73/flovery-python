@@ -7,7 +7,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-      target: Flowery
+      target: flowery
     container_name: flower_catalog_api
     restart: unless-stopped
     ports:
