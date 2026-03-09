@@ -18,6 +18,7 @@ class ProductBase(BaseModel):
         examples=["flowers", "soil", "fertilizers", "accessories"],
     )
     images: list[str] = Field(default=[], description="List of Cloudinary image URLs")
+    is_active: bool = Field(default=True, description="Whether the product is visible in the public catalog")
 
     @field_validator("category")
     @classmethod
@@ -38,6 +39,7 @@ class ProductUpdate(BaseModel):
     care_notes: Optional[str] = None
     category: Optional[str] = None
     images: Optional[list[str]] = None
+    is_active: Optional[bool] = None
 
     @field_validator("category")
     @classmethod
@@ -61,6 +63,9 @@ class Product(ProductBase):
 
 class ProductListResponse(BaseModel):
     total: int
+    page: int = 1
+    page_size: int = 20
+    pages: int = 1
     products: list[Product]
 
 
