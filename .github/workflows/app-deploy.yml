@@ -22,8 +22,6 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
 
-    environment: flowery-deploy
-
     steps:
     - name: Checkout Code
       uses: actions/checkout@v4

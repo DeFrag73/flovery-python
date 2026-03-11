@@ -19,8 +19,6 @@ jobs:
     name: 'Terraform'
     runs-on: ubuntu-latest
 
-    environment: flowery-deploy
-
     defaults:
       run:
         working-directory: ./terraform
