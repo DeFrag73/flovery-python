@@ -2,7 +2,7 @@ name: 'Deploy App to Cloud Run'
 
 on:
   push:
-    branches: [ "main", "dev" ]
+    branches: [ "main" ]
     paths-ignore:
       - 'terraform/**'
       - 'README.md'
