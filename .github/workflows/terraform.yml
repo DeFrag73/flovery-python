@@ -2,12 +2,17 @@ name: 'Terraform Infrastructure'
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "dev" ]
     paths:
-      - 'terraform/**' # Запускаємо тільки при зміні інфраструктури
+      - 'terraform/**'
   pull_request:
     paths:
       - 'terraform/**'
+
+# ДОДАЄМО ПРАВА ДЛЯ WIF
+permissions:
+  contents: 'read'
+  id-token: 'write'
 
 jobs:
   terraform:
@@ -15,44 +20,44 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./terraform # Вказуємо папку з tf файлами
+        working-directory: ./terraform
 
     steps:
     - name: Checkout Code
       uses: actions/checkout@v4
 
+    # ЗМІНЕНО: Авторизація через Workload Identity Federation
     - name: Authenticate to Google Cloud
       uses: google-github-actions/auth@v2
       with:
-        credentials_json: '${{ secrets.GCP_CREDENTIALS }}'
+        workload_identity_provider: 'projects/138796438230/locations/global/workloadIdentityPools/github-actions-pool/providers/github-provider'
+        service_account: 'github-actions-sa@flovery-489720.iam.gserviceaccount.com'
 
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v3
-
-    - name: Terraform Init
-      run: terraform init
+      with:
+        terraform_wrapper: false
 
     - name: Terraform Format
       run: terraform fmt -check
 
     - name: Terraform Plan
-      run: terraform plan -input=false
+      run: make plan
       env:
-        # Передаємо секрети як змінні середовища
-        TF_VAR_project_id: "твій-gcp-project-id" # Можна захардкодити або винести в secrets
         TF_VAR_mongo_url: ${{ secrets.MONGO_URL }}
         TF_VAR_admin_api_token: ${{ secrets.ADMIN_API_TOKEN }}
         TF_VAR_cloudinary_cloud_name: ${{ secrets.CLOUDINARY_CLOUD_NAME }}
         TF_VAR_cloudinary_api_key: ${{ secrets.CLOUDINARY_API_KEY }}
         TF_VAR_cloudinary_api_secret: ${{ secrets.CLOUDINARY_API_SECRET }}
+        TF_VAR_docker_image: "us-docker.pkg.dev/cloudrun/container/hello"
 
     - name: Terraform Apply
-      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-      run: terraform apply -auto-approve -input=false
+      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
+      run: make apply
       env:
-        TF_VAR_project_id: "твій-gcp-project-id"
         TF_VAR_mongo_url: ${{ secrets.MONGO_URL }}
         TF_VAR_admin_api_token: ${{ secrets.ADMIN_API_TOKEN }}
         TF_VAR_cloudinary_cloud_name: ${{ secrets.CLOUDINARY_CLOUD_NAME }}
         TF_VAR_cloudinary_api_key: ${{ secrets.CLOUDINARY_API_KEY }}
         TF_VAR_cloudinary_api_secret: ${{ secrets.CLOUDINARY_API_SECRET }}
+        TF_VAR_docker_image: "us-docker.pkg.dev/cloudrun/container/hello"

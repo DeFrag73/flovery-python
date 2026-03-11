@@ -2,16 +2,21 @@ name: 'Deploy App to Cloud Run'
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "dev" ]
     paths-ignore:
-      - 'terraform/**' # Ігноруємо зміни в інфраструктурі
+      - 'terraform/**'
       - 'README.md'
 
 env:
-  PROJECT_ID: "твій-gcp-project-id"
-  REGION: "europe-west1"
+  PROJECT_ID: "flovery-489720"
+  REGION: "europe-west4"
   REPO_NAME: "bloom-repo"
   SERVICE_NAME: "bloom-catalog-api"
+
+# ДОДАЄМО ПРАВА ДЛЯ WIF
+permissions:
+  contents: 'read'
+  id-token: 'write'
 
 jobs:
   deploy:
@@ -20,10 +25,12 @@ jobs:
     - name: Checkout Code
       uses: actions/checkout@v4
 
+    # ЗМІНЕНО: Авторизація через Workload Identity Federation
     - name: Authenticate to Google Cloud
       uses: google-github-actions/auth@v2
       with:
-        credentials_json: '${{ secrets.GCP_CREDENTIALS }}'
+        workload_identity_provider: 'projects/138796438230/locations/global/workloadIdentityPools/github-actions-pool/providers/github-provider'
+        service_account: 'github-actions-sa@flovery-489720.iam.gserviceaccount.com'
 
     - name: Set up Cloud SDK
       uses: google-github-actions/setup-gcloud@v2
