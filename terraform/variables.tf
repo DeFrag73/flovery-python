@@ -35,4 +35,20 @@ variable "admin_api_token" {
   sensitive = true
 }
 
-# Додай сюди також CLOUDINARY_CLOUD_NAME, API_KEY тощо.
+variable "cloudinary_cloud_name" {
+  description = "Cloudinary Cloud Name"
+  type        = string
+  sensitive   = true
+}
+
+variable "cloudinary_api_key" {
+  description = "Cloudinary API Key"
+  type        = string
+  sensitive   = true
+}
+
+variable "cloudinary_api_secret" {
+  description = "Cloudinary API Secret"
+  type        = string
+  sensitive   = true
+}

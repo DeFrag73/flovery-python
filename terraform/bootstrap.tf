@@ -15,10 +15,19 @@ resource "google_storage_bucket" "terraform_state" {
   uniform_bucket_level_access = true
 }
 
-# 2. Активуємо Artifact Registry API
-resource "google_project_service" "artifact_registry" {
-  project = var.project_id
-  service = "artifactregistry.googleapis.com"
+# Активуємо всі необхідні API для проєкту
+resource "google_project_service" "required_apis" {
+  for_each = toset([
+    "run.googleapis.com",             # Для Cloud Run
+    "compute.googleapis.com",         # Для Load Balancer та SSL
+    "iam.googleapis.com",             # Для створення Service Account
+    "iamcredentials.googleapis.com",  # Для Workload Identity Federation
+    "artifactregistry.googleapis.com" # Для Artifact Registry
+  ])
+
+  project            = var.project_id
+  service            = each.value
+  disable_on_destroy = false
 }
 
 # 3. Створення Artifact Registry для Docker образів
@@ -29,5 +38,5 @@ resource "google_artifact_registry_repository" "bloom_repo" {
   description   = "Приватний репозиторій для Docker образів Bloom & Soil"
   format        = "DOCKER"
 
-  depends_on = [google_project_service.artifact_registry]
+  depends_on = [google_project_service.required_apis]
 }
