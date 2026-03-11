@@ -31,3 +31,9 @@ Thumbs.db
 *.egg-info/
 dist/
 build/
+
+**/.terraform/*
+
+*.tfstate
+*.tfstate.*
+.terraform
