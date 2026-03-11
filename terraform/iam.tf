@@ -39,7 +39,7 @@ resource "google_iam_workload_identity_pool_provider" "github_provider" {
   }
 
   # Жорстка умова - дозволяти доступ ТІЛЬКИ цьому репозиторію
-  attribute_condition = "assertion.repository == \"defrag73/flovery-python\""
+  attribute_condition = "assertion.repository == \"DeFrag73/flovery-python\""
 
   oidc {
     issuer_uri = "https://token.actions.githubusercontent.com"
@@ -51,5 +51,5 @@ resource "google_service_account_iam_member" "workload_identity_user" {
   service_account_id = google_service_account.github_actions.name
   role               = "roles/iam.workloadIdentityUser"
 
-  member = "principalSet://iam.googleapis.com/${google_iam_workload_identity_pool.github_pool.name}/attribute.repository/deFrag73/flovery-python"
+  member = "principalSet://iam.googleapis.com/${google_iam_workload_identity_pool.github_pool.name}/attribute.repository/DeFrag73/flovery-python"
 }
