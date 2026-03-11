@@ -10,12 +10,24 @@ resource "google_storage_bucket" "terraform_state" {
 
   # Best Practice: Жорстка заборона публічного доступу
   public_access_prevention = "enforced"
+
+  # Required by org policy
+  uniform_bucket_level_access = true
 }
 
-# 2. Створення Artifact Registry для Docker образів
+# 2. Активуємо Artifact Registry API
+resource "google_project_service" "artifact_registry" {
+  project = var.project_id
+  service = "artifactregistry.googleapis.com"
+}
+
+# 3. Створення Artifact Registry для Docker образів
 resource "google_artifact_registry_repository" "bloom_repo" {
+  project       = var.project_id
   location      = var.region
   repository_id = "bloom-repo"
   description   = "Приватний репозиторій для Docker образів Bloom & Soil"
   format        = "DOCKER"
+
+  depends_on = [google_project_service.artifact_registry]
 }

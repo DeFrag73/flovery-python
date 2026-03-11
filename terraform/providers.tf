@@ -6,11 +6,10 @@ terraform {
     }
   }
 
-  # ПОКИ ЩО ЗАКОМЕНТОВАНО! Ми розкоментуємо це на Кроці 3.
-  # backend "gcs" {
-  #   bucket = "bloom-terraform-state-unique-123" # Назва має бути глобально унікальною!
-  #   prefix = "terraform/state"
-  # }
+  backend "gcs" {
+    bucket = "flowery-bloom-terraform-state-unique-123"
+    prefix = "terraform/state"
+  }
 }
 
 provider "google" {
