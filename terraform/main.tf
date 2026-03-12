@@ -115,7 +115,7 @@ resource "google_compute_backend_service" "admin" {
 
 # 3. Маршрутизатор (URL Map), який розділяє трафік
 resource "google_compute_url_map" "default" {
-  name            = "bloom-url-map"
+  name            = "bloom-url-map-v2"
   default_service = google_compute_backend_service.public.id
 
   host_rule {
