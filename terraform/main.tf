@@ -42,8 +42,6 @@ resource "google_cloud_run_v2_service" "app" {
       template[0].containers[0].image, # Terraform більше не буде відкочувати версію образу
     ]
   }
-
-  depends_on = [google_project_service.required_apis]
 }
 
 # Дозволяємо Load Balancer'у викликати наш Cloud Run (надаємо публічний доступ до LB)
@@ -61,8 +59,6 @@ resource "google_cloud_run_v2_service_iam_member" "public_access" {
 # Створюємо резервну публічну статичну IP-адресу для Load Balancer
 resource "google_compute_global_address" "default" {
   name = "bloom-api-ip"
-
-  depends_on = [google_project_service.required_apis]
 }
 
 # Serverless NEG (Міст між Load Balancer та Cloud Run)
@@ -72,6 +68,17 @@ resource "google_compute_region_network_endpoint_group" "serverless_neg" {
   region                = var.region
   cloud_run {
     service = google_cloud_run_v2_service.app.name
+  }
+}
+
+resource "google_compute_backend_service" "default" {
+  name                  = "bloom-backend-service"
+  protocol              = "HTTP"
+  port_name             = "http"
+  load_balancing_scheme = "EXTERNAL_MANAGED"
+
+  backend {
+    group = google_compute_region_network_endpoint_group.serverless_neg.id
   }
 }
 
@@ -109,13 +116,10 @@ resource "google_compute_backend_service" "admin" {
   backend {
     group = google_compute_region_network_endpoint_group.serverless_neg.id
   }
-
-  depends_on = [google_project_service.required_apis]
 }
 
-# 3. Маршрутизатор (URL Map), який розділяє трафік
 resource "google_compute_url_map" "default" {
-  name            = "bloom-url-map-v2"
+  name            = "bloom-url-map" # Повернули стару назву
   default_service = google_compute_backend_service.public.id
 
   host_rule {
@@ -150,8 +154,6 @@ resource "google_compute_managed_ssl_certificate" "default" {
   managed {
     domains = [var.domain_name] # Наприклад: api.bloomsoil.com
   }
-
-  depends_on = [google_project_service.required_apis]
 }
 
 # Target HTTPS Proxy (Зв'язує URL Map та SSL сертифікат)
