@@ -122,7 +122,7 @@ resource "google_compute_url_map" "default" {
 
     path_rule {
       # Перенаправляємо всі адмінські шляхи на захищений IAP бекенд
-      paths   = [
+      paths = [
         "/admin-panel", "/admin-panel/*",
         "/api/v1/admin", "/api/v1/admin/*",
         "/docs", "/redoc", "/openapi.json"
