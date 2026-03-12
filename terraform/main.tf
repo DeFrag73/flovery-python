@@ -71,17 +71,6 @@ resource "google_compute_region_network_endpoint_group" "serverless_neg" {
   }
 }
 
-resource "google_compute_backend_service" "default" {
-  name                  = "bloom-backend-service"
-  protocol              = "HTTP"
-  port_name             = "http"
-  load_balancing_scheme = "EXTERNAL_MANAGED"
-
-  backend {
-    group = google_compute_region_network_endpoint_group.serverless_neg.id
-  }
-}
-
 # 1. ПУБЛІЧНИЙ Backend Service (для каталогу)
 resource "google_compute_backend_service" "public" {
   name                  = "bloom-public-backend"
