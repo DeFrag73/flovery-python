@@ -118,6 +118,10 @@ resource "google_compute_url_map" "default" {
   name            = "bloom-url-map-v2"
   default_service = google_compute_backend_service.public.id
 
+  lifecycle {
+    create_before_destroy = true
+  }
+
   host_rule {
     hosts        = [var.domain_name]
     path_matcher = "bloom-paths"
