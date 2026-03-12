@@ -18,12 +18,13 @@ resource "google_storage_bucket" "terraform_state" {
 # Активуємо всі необхідні API для проєкту
 resource "google_project_service" "required_apis" {
   for_each = toset([
-    "run.googleapis.com",                 # Для Cloud Run
-    "compute.googleapis.com",             # Для Load Balancer та SSL
-    "iam.googleapis.com",                 # Для створення Service Account
-    "iamcredentials.googleapis.com",      # Для Workload Identity Federation
-    "artifactregistry.googleapis.com",    # Для Artifact Registry
-    "cloudresourcemanager.googleapis.com" # Для керування IAM
+    "run.googleapis.com",                  # Для Cloud Run
+    "compute.googleapis.com",              # Для Load Balancer та SSL
+    "iam.googleapis.com",                  # Для створення Service Account
+    "iamcredentials.googleapis.com",       # Для Workload Identity Federation
+    "artifactregistry.googleapis.com",     # Для Artifact Registry
+    "cloudresourcemanager.googleapis.com", # Для керування IAM
+    "iap.googleapis.com"
   ])
 
   project            = var.project_id

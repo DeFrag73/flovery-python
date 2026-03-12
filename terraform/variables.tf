@@ -52,3 +52,20 @@ variable "cloudinary_api_secret" {
   type        = string
   sensitive   = true
 }
+
+variable "iap_client_id" {
+  description = "OAuth 2.0 Client ID для IAP"
+  type        = string
+  sensitive   = true
+}
+
+variable "iap_client_secret" {
+  description = "OAuth 2.0 Client Secret для IAP"
+  type        = string
+  sensitive   = true
+}
+
+variable "admin_email" {
+  description = "Google Email для доступу в адмінку"
+  type        = string
+}

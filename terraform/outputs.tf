@@ -8,3 +8,8 @@ output "service_account_email" {
   value       = google_service_account.github_actions.email
   description = "Скопіюй це для GitHub Actions (service_account)"
 }
+
+# Виводимо IP-адресу, яку треба буде прописати в DNS (А-запис)
+output "load_balancer_ip" {
+  value = google_compute_global_address.default.address
+}

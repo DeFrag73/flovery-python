@@ -50,6 +50,9 @@ jobs:
         TF_VAR_cloudinary_cloud_name: ${{ secrets.CLOUDINARY_CLOUD_NAME }}
         TF_VAR_cloudinary_api_key: ${{ secrets.CLOUDINARY_API_KEY }}
         TF_VAR_cloudinary_api_secret: ${{ secrets.CLOUDINARY_API_SECRET }}
+        TF_VAR_iap_client_id: ${{ secrets.IAP_CLIENT_ID }}
+        TF_VAR_iap_client_secret: ${{ secrets.IAP_CLIENT_SECRET }}
+        TF_VAR_admin_email: ${{ secrets.ADMIN_EMAIL }}
         TF_VAR_docker_image: "us-docker.pkg.dev/cloudrun/container/hello"
 
     - name: Terraform Apply
@@ -61,4 +64,7 @@ jobs:
         TF_VAR_cloudinary_cloud_name: ${{ secrets.CLOUDINARY_CLOUD_NAME }}
         TF_VAR_cloudinary_api_key: ${{ secrets.CLOUDINARY_API_KEY }}
         TF_VAR_cloudinary_api_secret: ${{ secrets.CLOUDINARY_API_SECRET }}
+        TF_VAR_iap_client_id: ${{ secrets.IAP_CLIENT_ID }}
+        TF_VAR_iap_client_secret: ${{ secrets.IAP_CLIENT_SECRET }}
+        TF_VAR_admin_email: ${{ secrets.ADMIN_EMAIL }}
         TF_VAR_docker_image: "us-docker.pkg.dev/cloudrun/container/hello"
