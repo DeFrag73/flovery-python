@@ -17,7 +17,10 @@ class Settings(BaseSettings):
     ADMIN_API_TOKEN: str
 
     # CORS
-    CORS_ORIGINS: list[str] = ["*"]
+    CORS_ORIGINS: list[str] = [
+        "https://bloomandsoil.pp.ua",
+        "http://localhost:8000"
+    ]
 
     class Config:
         env_file = ".env"
