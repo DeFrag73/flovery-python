@@ -39,6 +39,4 @@ resource "google_artifact_registry_repository" "bloom_repo" {
   repository_id = "bloom-repo"
   description   = "Приватний репозиторій для Docker образів Bloom & Soil"
   format        = "DOCKER"
-
-  depends_on = [google_project_service.required_apis]
 }
