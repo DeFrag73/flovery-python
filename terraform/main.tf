@@ -125,7 +125,9 @@ resource "google_compute_url_map" "default" {
       paths = [
         "/admin-panel", "/admin-panel/*",
         "/api/v1/admin", "/api/v1/admin/*",
-        "/docs", "/redoc", "/openapi.json"
+        "/docs", "/docs/*",
+        "/redoc", "/redoc/*",
+        "/openapi.json", "/openapi.json/*"
       ]
       service = google_compute_backend_service.admin.id
     }
