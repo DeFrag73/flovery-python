@@ -23,7 +23,8 @@ resource "google_project_service" "required_apis" {
     "iam.googleapis.com",                 # Для створення Service Account
     "iamcredentials.googleapis.com",      # Для Workload Identity Federation
     "artifactregistry.googleapis.com",    # Для Artifact Registry
-    "cloudresourcemanager.googleapis.com" # Для керування IAM
+    "cloudresourcemanager.googleapis.com", # Для керування IAM
+    "iap.googleapis.com"
   ])
 
   project            = var.project_id

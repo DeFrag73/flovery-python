@@ -75,22 +75,70 @@ resource "google_compute_region_network_endpoint_group" "serverless_neg" {
   }
 }
 
-# Backend Service (керує трафіком, підключає NEG)
-resource "google_compute_backend_service" "default" {
-  name                  = "bloom-backend-service"
+# 1. ПУБЛІЧНИЙ Backend Service (для каталогу)
+resource "google_compute_backend_service" "public" {
+  name                  = "bloom-public-backend"
   protocol              = "HTTP"
   port_name             = "http"
   load_balancing_scheme = "EXTERNAL_MANAGED"
+
+  # Підключаємо WAF для блокування прямого IP
+  security_policy = google_compute_security_policy.armor_policy.id
 
   backend {
     group = google_compute_region_network_endpoint_group.serverless_neg.id
   }
 }
 
-# URL Map (маршрутизатор трафіку, скеровує всі запити на наш Backend Service)
+# 2. АДМІНСЬКИЙ Backend Service (з увімкненим IAP)
+resource "google_compute_backend_service" "admin" {
+  name                  = "bloom-admin-backend"
+  protocol              = "HTTP"
+  port_name             = "http"
+  load_balancing_scheme = "EXTERNAL_MANAGED"
+
+  # Підключаємо WAF для блокування прямого IP
+  security_policy = google_compute_security_policy.armor_policy.id
+
+  # Вмикаємо IAP для цього бекенду
+  iap {
+    oauth2_client_id     = var.iap_client_id
+    oauth2_client_secret = var.iap_client_secret
+  }
+
+  backend {
+    group = google_compute_region_network_endpoint_group.serverless_neg.id
+  }
+}
+
+# 3. Маршрутизатор (URL Map), який розділяє трафік
 resource "google_compute_url_map" "default" {
   name            = "bloom-url-map"
-  default_service = google_compute_backend_service.default.id
+  default_service = google_compute_backend_service.public.id
+
+  host_rule {
+    hosts        = [var.domain_name]
+    path_matcher = "bloom-paths"
+  }
+
+  path_matcher {
+    name            = "bloom-paths"
+    default_service = google_compute_backend_service.public.id
+
+    path_rule {
+      # Перенаправляємо всі адмінські шляхи на захищений IAP бекенд
+      paths   = ["/admin-panel", "/admin-panel/*", "/api/v1/admin", "/api/v1/admin/*"]
+      service = google_compute_backend_service.admin.id
+    }
+  }
+}
+
+# 4. Надаємо твоєму email право проходити через IAP
+resource "google_iap_web_backend_service_iam_member" "admin_access" {
+  project             = var.project_id
+  web_backend_service = google_compute_backend_service.admin.name
+  role                = "roles/iap.httpsResourceAccessor"
+  member              = "user:${var.admin_email}"
 }
 
 # Google Managed SSL Certificate (Автоматичний безкоштовний HTTPS сертифікат)
@@ -120,7 +168,67 @@ resource "google_compute_global_forwarding_rule" "default" {
   load_balancing_scheme = "EXTERNAL_MANAGED"
 }
 
-# Виводимо IP-адресу, яку треба буде прописати в DNS (А-запис)
-output "load_balancer_ip" {
-  value = google_compute_global_address.default.address
+# =========================================================
+# 3. GOOGLE CLOUD ARMOR (WEB APPLICATION FIREWALL)
+# =========================================================
+
+resource "google_compute_security_policy" "armor_policy" {
+  name        = "bloom-security-policy"
+  description = "Захист від прямого доступу по IP адресі"
+
+  # Правило: Забороняємо прямий доступ по IP (перевіряємо Host header)
+  rule {
+    action   = "deny(404)"
+    priority = 2000
+    match {
+      expr {
+        # Якщо Host не дорівнює твоєму домену - блокуємо (відкидаємо запити на IP)
+        expression = "request.headers['host'] != '${var.domain_name}'"
+      }
+    }
+    description = "Блокувати прямий доступ по IP"
+  }
+
+  # Дефолтне правило: Дозволити весь інший трафік (наш публічний каталог)
+  rule {
+    action   = "allow"
+    priority = 2147483647
+    match {
+      versioned_expr = "SRC_IPS_V1"
+      config {
+        src_ip_ranges = ["*"]
+      }
+    }
+    description = "Дозволити решту трафіку"
+  }
+}
+
+# =========================================================
+# 4. HTTP ДО HTTPS РЕДІРЕКТ
+# =========================================================
+
+# URL Map, який робить виключно редірект на HTTPS
+resource "google_compute_url_map" "http_redirect" {
+  name = "bloom-http-redirect"
+
+  default_url_redirect {
+    https_redirect         = true
+    redirect_response_code = "MOVED_PERMANENTLY_DEFAULT" # 301 Redirect
+    strip_query            = false
+  }
+}
+
+# Target HTTP Proxy для редіректу
+resource "google_compute_target_http_proxy" "http" {
+  name    = "bloom-http-proxy"
+  url_map = google_compute_url_map.http_redirect.id
+}
+
+# Forwarding Rule для порту 80 (HTTP)
+resource "google_compute_global_forwarding_rule" "http" {
+  name                  = "bloom-http-forwarding-rule"
+  target                = google_compute_target_http_proxy.http.id
+  port_range            = "80"
+  ip_address            = google_compute_global_address.default.address # Використовуємо ту саму IP Load Balancer'а
+  load_balancing_scheme = "EXTERNAL_MANAGED"
 }
