@@ -109,6 +109,8 @@ resource "google_compute_backend_service" "admin" {
   backend {
     group = google_compute_region_network_endpoint_group.serverless_neg.id
   }
+
+  depends_on = [google_project_service.required_apis]
 }
 
 # 3. Маршрутизатор (URL Map), який розділяє трафік
