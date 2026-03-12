@@ -122,7 +122,11 @@ resource "google_compute_url_map" "default" {
 
     path_rule {
       # Перенаправляємо всі адмінські шляхи на захищений IAP бекенд
-      paths   = ["/admin-panel", "/admin-panel/*", "/api/v1/admin", "/api/v1/admin/*"]
+      paths   = [
+        "/admin-panel", "/admin-panel/*",
+        "/api/v1/admin", "/api/v1/admin/*",
+        "/docs", "/redoc", "/openapi.json"
+      ]
       service = google_compute_backend_service.admin.id
     }
   }
@@ -167,22 +171,58 @@ resource "google_compute_global_forwarding_rule" "default" {
 
 resource "google_compute_security_policy" "armor_policy" {
   name        = "bloom-security-policy"
-  description = "Захист від прямого доступу по IP адресі"
+  description = "Комплексний захист WAF"
 
-  # Правило: Забороняємо прямий доступ по IP (перевіряємо Host header)
+  # 1. Захист від SQL-ін'єкцій (щоб ніхто не "зламав" запити до MongoDB)
+  rule {
+    action   = "deny(403)"
+    priority = 1000
+    match {
+      expr {
+        expression = "evaluatePreconfiguredExpr('sqli-v33-stable')"
+      }
+    }
+    description = "Блокувати SQL Injection"
+  }
+
+  # 2. Захист від міжсайтового скриптингу (XSS)
+  rule {
+    action   = "deny(403)"
+    priority = 1001
+    match {
+      expr {
+        expression = "evaluatePreconfiguredExpr('xss-v33-stable')"
+      }
+    }
+    description = "Блокувати XSS атаки"
+  }
+
+  # 3. Захист від віддаленого виконання коду (RCE) та включення файлів (LFI/RFI)
+  rule {
+    action   = "deny(403)"
+    priority = 1002
+    match {
+      expr {
+        expression = "evaluatePreconfiguredExpr('rce-v33-stable') || evaluatePreconfiguredExpr('lfi-v33-stable') || evaluatePreconfiguredExpr('rfi-v33-stable')"
+      }
+    }
+    description = "Блокувати RCE, LFI, RFI атаки"
+  }
+
+  # 4. Забороняємо прямий доступ по IP
   rule {
     action   = "deny(404)"
     priority = 2000
     match {
       expr {
-        # Якщо Host не дорівнює твоєму домену - блокуємо (відкидаємо запити на IP)
+        # Якщо Host не дорівнює твоєму домену - відкидаємо запит
         expression = "request.headers['host'] != '${var.domain_name}'"
       }
     }
-    description = "Блокувати прямий доступ по IP"
+    description = "Блокувати прямий доступ по IP Load Balancer'а"
   }
 
-  # Дефолтне правило: Дозволити весь інший трафік (наш публічний каталог)
+  # 5. Дефолтне правило: Дозволити весь безпечний трафік
   rule {
     action   = "allow"
     priority = 2147483647
@@ -192,7 +232,7 @@ resource "google_compute_security_policy" "armor_policy" {
         src_ip_ranges = ["*"]
       }
     }
-    description = "Дозволити решту трафіку"
+    description = "Дозволити легітимний трафік"
   }
 }
 
