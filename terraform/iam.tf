@@ -12,7 +12,7 @@ resource "google_project_iam_member" "github_actions_roles" {
     "roles/storage.admin",                   # Для доступу до tfstate бакета
     "roles/run.admin",                       # Для деплою Cloud Run
     "roles/artifactregistry.admin",          # Для пушу Docker образів
-    "roles/iam.serviceAccountUser",           # Щоб Cloud Run міг запускатись від імені Service Account
+    "roles/iam.serviceAccountUser",          # Щоб Cloud Run міг запускатись від імені Service Account
     "roles/iap.admin"
   ])
   project = var.project_id
