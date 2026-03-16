@@ -94,7 +94,7 @@ resource "google_compute_backend_service" "admin" {
   load_balancing_scheme = "EXTERNAL_MANAGED"
 
   # Підключаємо WAF для блокування прямого IP
-  security_policy = google_compute_security_policy.armor_policy.id
+  # security_policy = google_compute_security_policy.armor_policy.id
 
   # Вмикаємо IAP для цього бекенду
   iap {
