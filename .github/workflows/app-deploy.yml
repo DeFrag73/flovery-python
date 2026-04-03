@@ -8,7 +8,7 @@ on:
       - 'README.md'
 
 env:
-  PROJECT_ID: "flovery-489720"
+  PROJECT_ID: "flowery-492219"
   REGION: "europe-west4"
   REPO_NAME: "bloom-repo"
   SERVICE_NAME: "bloom-catalog-api"
