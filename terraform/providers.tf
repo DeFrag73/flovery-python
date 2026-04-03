@@ -7,7 +7,7 @@ terraform {
   }
 
   backend "gcs" {
-    bucket = "flowery-bloom-terraform-state-unique-123"
+    bucket = "flowery-bloom-terraform-state-unique-124"
     prefix = "terraform/state"
   }
 }
