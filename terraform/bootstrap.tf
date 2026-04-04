@@ -32,6 +32,15 @@ resource "google_project_service" "required_apis" {
   disable_on_destroy = false
 }
 
+# Примусово створюємо сервісний акаунт для IAP
+resource "google_project_service_identity" "iap_sa" {
+  provider = google-beta
+  project  = var.project_id
+  service  = "iap.googleapis.com"
+
+  depends_on = [google_project_service.required_apis]
+}
+
 # 3. Створення Artifact Registry для Docker образів
 resource "google_artifact_registry_repository" "bloom_repo" {
   project       = var.project_id
