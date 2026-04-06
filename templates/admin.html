@@ -104,7 +104,7 @@
                   Неактивний
                 </span>
               </div>
-              <p class="text-xs text-bark/50 capitalize mt-0.5" x-text="p.category === 'flowers' ? 'квіти' : p.category === 'soil' ? 'ґрунт' : p.category === 'fertilizers' ? 'добрива' : 'аксесуари'"></p>
+              <p class="text-xs text-bark/50 capitalize mt-0.5" x-text="p.category === 'flowers' ? 'квіти' : p.category === 'compositions' ? 'композиції' : p.category === 'soil' ? 'ґрунт' : p.category === 'fertilizers' ? 'добрива' : 'аксесуари'"></p>
               <p class="text-xs text-bark/40 truncate" x-text="(p.images || []).length + ' зображень'"></p>
             </div>
 
@@ -121,6 +121,12 @@
                   <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.964-7.178z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                 </svg>
               </a>
+              <button @click="openEdit(p)"
+                      class="w-8 h-8 rounded-lg bg-parchment hover:bg-blue-50 flex items-center justify-center transition-colors group/edit" title="Редагувати">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-bark/60 group-hover/edit:text-blue-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+                </svg>
+              </button>
               <button @click="confirmDelete(p)"
                       class="w-8 h-8 rounded-lg bg-parchment hover:bg-red-50 flex items-center justify-center transition-colors group/del" title="Видалити">
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-bark/40 group-hover/del:text-red-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -148,6 +154,7 @@
                   class="w-full px-3 py-2.5 rounded-xl bg-parchment/60 border border-parchment text-sm text-bark focus:outline-none focus:ring-2 focus:ring-sage appearance-none">
             <option value="">Оберіть категорію…</option>
             <option value="flowers">🌸 Квіти</option>
+            <option value="compositions">💐 Композиції</option>
             <option value="soil">🪴 Ґрунт</option>
             <option value="fertilizers">🌱 Добрива</option>
             <option value="accessories">✂️ Аксесуари</option>
@@ -211,40 +218,150 @@
         </button>
       </div>
     </div>
+    <template x-teleport="body">
+      <div x-show="deleteTarget"
+           style="display: none;"
+           x-transition:enter="transition ease-out duration-200"
+           x-transition:enter-start="opacity-0"
+           x-transition:enter-end="opacity-100"
+           class="fixed inset-0 bg-bark/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
 
-    <div x-show="deleteTarget"
-         style="display: none;"
-         x-transition:enter="transition ease-out duration-200"
-         x-transition:enter-start="opacity-0"
-         x-transition:enter-end="opacity-100"
-         class="fixed inset-0 bg-bark/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+        <div @click.stop
+             x-show="deleteTarget"
+             x-transition:enter="transition ease-out duration-300 delay-75"
+             x-transition:enter-start="opacity-0 translate-y-4"
+             x-transition:enter-end="opacity-100 translate-y-0"
+             class="bg-white rounded-2xl p-6 w-full max-w-sm space-y-4 shadow-2xl">
 
-      <div @click.stop
-           x-show="deleteTarget"
-           x-transition:enter="transition ease-out duration-300 delay-75"
-           x-transition:enter-start="opacity-0 translate-y-4"
-           x-transition:enter-end="opacity-100 translate-y-0"
-           class="bg-white rounded-2xl p-6 w-full max-w-sm space-y-4 shadow-2xl">
+          <div class="text-center">
+            <div class="text-3xl mb-2">🗑️</div>
+            <h3 class="font-display font-bold text-bark">Видалити товар?</h3>
+            <p class="text-sm text-bark/60 mt-1" x-text="'&quot;' + (deleteTarget?.title || '') + '&quot; буде назавжди видалено.'"></p>
+          </div>
 
-        <div class="text-center">
-          <div class="text-3xl mb-2">🗑️</div>
-          <h3 class="font-display font-bold text-bark">Видалити товар?</h3>
-          <p class="text-sm text-bark/60 mt-1" x-text="'&quot;' + (deleteTarget?.title || '') + '&quot; буде назавжди видалено.'"></p>
-        </div>
-
-        <div class="flex gap-3">
-          <button @click="deleteTarget = null"
-                  class="flex-1 py-2.5 rounded-xl border border-parchment text-sm text-bark/70 hover:bg-parchment transition-colors font-semibold">
-            Скасувати
-          </button>
-          <button @click="deleteProduct()"
-                  :disabled="deleting"
-                  class="flex-1 py-2.5 rounded-xl bg-red-500 text-white text-sm font-bold hover:bg-red-600 transition-colors disabled:opacity-50">
-            <span x-text="deleting ? 'Видалення…' : 'Видалити'"></span>
-          </button>
+          <div class="flex gap-3">
+            <button @click="deleteTarget = null"
+                    class="flex-1 py-2.5 rounded-xl border border-parchment text-sm text-bark/70 hover:bg-parchment transition-colors font-semibold">
+              Скасувати
+            </button>
+            <button @click="deleteProduct()"
+                    :disabled="deleting"
+                    class="flex-1 py-2.5 rounded-xl bg-red-500 text-white text-sm font-bold hover:bg-red-600 transition-colors disabled:opacity-50">
+              <span x-text="deleting ? 'Видалення…' : 'Видалити'"></span>
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+    </template>
+    <template x-teleport="body">
+      <div x-show="editTarget"
+           style="display: none;"
+           class="fixed inset-0 bg-bark/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+        <div @click.stop
+             x-show="editTarget"
+             class="bg-white rounded-2xl p-6 w-full max-w-md space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+          <div class="flex justify-between items-center mb-2">
+            <h3 class="font-display font-bold text-bark text-xl">Редагувати товар</h3>
+            <button @click="editTarget = null" class="text-bark/40 hover:text-red-500 transition-colors">✕</button>
+          </div>
+
+          <div class="space-y-3">
+            <div class="space-y-1.5">
+              <label class="text-xs font-semibold text-bark/60 uppercase">Фото товару</label>
+
+              <div class="flex items-center gap-4 p-3 rounded-xl bg-parchment/60 border border-parchment">
+                <div class="w-16 h-16 rounded-lg bg-bark/5 border border-parchment overflow-hidden flex-shrink-0 relative">
+                  <template x-if="editForm.image_preview_url">
+                    <img :src="editForm.image_preview_url" class="w-full h-full object-cover">
+                  </template>
+                  <template x-if="!editForm.image_preview_url">
+                    <div class="w-full h-full flex items-center justify-center text-bark/20 text-xs">Немає</div>
+                  </template>
+
+                  <template x-if="editForm.delete_current_image && !editForm.file">
+                      <div class="absolute inset-0 bg-red-500/80 flex items-center justify-center">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                      </div>
+                  </template>
+                </div>
+
+                <div class="flex-1 space-y-2">
+                  <input type="file"
+                         id="editProductImage"
+                         accept="image/*"
+                         class="hidden"
+                         @change="handleEditFileChange($event)">
+
+                  <div class="flex gap-2">
+                      <button @click="document.getElementById('editProductImage').click()"
+                              type="button"
+                              class="px-3 py-1.5 rounded-lg bg-white border border-parchment text-xs text-bark/80 hover:bg-parchment transition-colors font-semibold flex items-center gap-1.5">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                        </svg>
+                        <span x-text="editForm.file ? 'Інше фото…' : 'Змінити фото'"></span>
+                      </button>
+
+                      <template x-if="editTarget?.images?.length > 0 && !editForm.file">
+                        <button @click="clearEditImage()"
+                                type="button"
+                                class="px-3 py-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-xs text-red-600 transition-colors font-semibold flex items-center gap-1.5">
+                           <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                             <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                           </svg>
+                           <span x-text="editForm.delete_current_image ? 'Відновити' : 'Видалити'"></span>
+                        </button>
+                      </template>
+
+                      <template x-if="editForm.file">
+                          <button @click="resetEditFile()"
+                                  type="button"
+                                  class="px-3 py-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-xs text-red-600 transition-colors font-semibold flex items-center gap-1.5">
+                             ✕ Скасувати
+                          </button>
+                      </template>
+                  </div>
+                  <p class="text-xs text-bark/50" x-text="editForm.file ? editForm.file.name : 'Файл не вибрано'"></p>
+                </div>
+              </div>
+            </div>
+            <div class="space-y-1">
+              <label class="text-xs font-semibold text-bark/60 uppercase">Назва</label>
+              <input x-model="editForm.title" type="text" class="w-full px-3 py-2 rounded-xl bg-parchment/60 border border-parchment text-sm focus:ring-2 focus:ring-sage focus:outline-none">
+            </div>
+
+            <div class="space-y-1">
+              <label class="text-xs font-semibold text-bark/60 uppercase">Категорія</label>
+              <select x-model="editForm.category" class="w-full px-3 py-2 rounded-xl bg-parchment/60 border border-parchment text-sm focus:ring-2 focus:ring-sage focus:outline-none appearance-none">
+                <option value="flowers">🌸 Квіти</option>
+                <option value="compositions">💐 Композиції</option>
+                <option value="soil">🪴 Ґрунт</option>
+                <option value="fertilizers">🌱 Добрива</option>
+                <option value="accessories">✂️ Аксесуари</option>
+              </select>
+            </div>
+
+            <div class="space-y-1">
+              <label class="text-xs font-semibold text-bark/60 uppercase">Опис *</label>
+              <textarea x-model="editForm.description" rows="3" class="w-full px-3 py-2 rounded-xl bg-parchment/60 border border-parchment text-sm focus:ring-2 focus:ring-sage focus:outline-none resize-none"></textarea>
+            </div>
+
+            <div class="space-y-1">
+              <label class="text-xs font-semibold text-bark/60 uppercase">Інструкції з догляду</label>
+              <textarea x-model="editForm.care_notes" rows="2" class="w-full px-3 py-2 rounded-xl bg-parchment/60 border border-parchment text-sm focus:ring-2 focus:ring-sage focus:outline-none resize-none"></textarea>
+            </div>
+
+            <button @click="submitEdit()"
+                    :disabled="submittingEdit"
+                    class="w-full mt-2 bg-sage text-white py-2.5 rounded-xl text-sm font-bold tracking-wide hover:bg-sage-dark transition-colors disabled:opacity-50">
+              <span x-text="submittingEdit ? 'Збереження…' : 'Зберегти зміни'"></span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </template>
 
   </div>
 </div>
@@ -267,6 +384,19 @@ function adminPanel() {
     selectedFiles: [],
     submitting: false,
     uploadStatus: '',
+
+    editTarget: null,
+    editForm: {
+        id: '',
+        title: '',
+        category: '',
+        description: '',
+        care_notes: '',
+        file: null,
+        delete_current_image: false,
+        image_preview_url: ''
+    },
+    submittingEdit: false,
 
     deleteTarget: null,
     deleting: false,
@@ -442,6 +572,95 @@ function adminPanel() {
         this.showToast(e.message, 'error');
       } finally {
         this.submitting = false;
+      }
+    },
+
+    // ── Edit ──────────────────────────────────────────────────────────────────
+    openEdit(product) {
+      this.editTarget = product;
+      this.editForm = {
+        id: product.id,
+        title: product.title,
+        category: product.category,
+        description: product.description,
+        care_notes: product.care_notes || '',
+        file: null,
+        delete_current_image: false,
+        image_preview_url: (product.images && product.images.length > 0) ? product.images[0] : ''
+      };
+      const fileInput = document.getElementById('editProductImage');
+      if (fileInput) fileInput.value = '';
+    },
+
+    handleEditFileChange(event) {
+      const file = event.target.files[0];
+      if (file) {
+        this.editForm.file = file;
+        this.editForm.delete_current_image = false;
+        this.editForm.image_preview_url = URL.createObjectURL(file);
+      }
+    },
+
+    clearEditImage() {
+        this.editForm.delete_current_image = !this.editForm.delete_current_image;
+        if (this.editForm.delete_current_image && !this.editForm.file) {
+            this.editForm.image_preview_url = '';
+        } else if (!this.editForm.delete_current_image && !this.editForm.file) {
+            this.editForm.image_preview_url = (this.editTarget.images && this.editTarget.images.length > 0) ? this.editTarget.images[0] : '';
+        }
+    },
+
+    resetEditFile() {
+        this.editForm.file = null;
+        document.getElementById('editProductImage').value = '';
+        if (this.editForm.delete_current_image) {
+            this.editForm.image_preview_url = '';
+        } else {
+            this.editForm.image_preview_url = (this.editTarget.images && this.editTarget.images.length > 0) ? this.editTarget.images[0] : '';
+        }
+    },
+
+    async submitEdit() {
+      if (!this.editForm.title.trim() || !this.editForm.description.trim()) {
+        this.showToast('Назва та опис обов\'язкові', 'error');
+        return;
+      }
+
+      this.submittingEdit = true;
+      try {
+        const formData = new FormData();
+        formData.append('title', this.editForm.title.trim());
+        formData.append('category', this.editForm.category);
+        formData.append('description', this.editForm.description.trim());
+        formData.append('delete_current_image', this.editForm.delete_current_image);
+
+        if (this.editForm.care_notes) {
+            formData.append('care_notes', this.editForm.care_notes.trim());
+        }
+        if (this.editForm.file) {
+            formData.append('file', this.editForm.file);
+        }
+
+        const res = await fetch(`/api/v1/admin/products/${this.editForm.id}`, {
+          method: 'PUT',
+          headers: {
+            'X-Admin-Token': this.token,
+          },
+          body: formData,
+        });
+
+        if (!res.ok) {
+            const errorData = await res.json();
+            throw new Error(errorData.detail || 'Не вдалося оновити товар');
+        }
+
+        this.showToast('Товар успішно оновлено', 'success');
+        this.editTarget = null;
+        await this.loadProducts();
+      } catch(e) {
+        this.showToast(e.message, 'error');
+      } finally {
+        this.submittingEdit = false;
       }
     },
 

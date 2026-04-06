@@ -15,7 +15,7 @@ class ProductBase(BaseModel):
     category: str = Field(
         ...,
         description="Product category",
-        examples=["flowers", "soil", "fertilizers", "accessories"],
+        examples=["flowers", "soil", "fertilizers", "accessories", "compositions"],
     )
     images: list[str] = Field(default=[], description="List of Cloudinary image URLs")
     is_active: bool = Field(default=True, description="Whether the product is visible in the public catalog")
@@ -23,7 +23,7 @@ class ProductBase(BaseModel):
     @field_validator("category")
     @classmethod
     def validate_category(cls, v: str) -> str:
-        allowed = {"flowers", "soil", "fertilizers", "accessories"}
+        allowed = {"flowers", "soil", "fertilizers", "accessories", "compositions"}
         if v.lower() not in allowed:
             raise ValueError(f"Category must be one of: {', '.join(sorted(allowed))}")
         return v.lower()
@@ -46,7 +46,7 @@ class ProductUpdate(BaseModel):
     def validate_category(cls, v: Optional[str]) -> Optional[str]:
         if v is None:
             return v
-        allowed = {"flowers", "soil", "fertilizers", "accessories"}
+        allowed = {"flowers", "soil", "fertilizers", "accessories", "compositions"}
         if v.lower() not in allowed:
             raise ValueError(f"Category must be one of: {', '.join(sorted(allowed))}")
         return v.lower()
