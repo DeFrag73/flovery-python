@@ -1,5 +1,5 @@
-
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Query, status
+from fastapi import APIRouter, Depends, HTTPException, status, File, UploadFile, Form, Query
+from typing import Annotated, Optional
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from bson import ObjectId
 from bson.errors import InvalidId
@@ -95,32 +95,66 @@ async def create_product(
     return Product(**created)
 
 
-@router.put(
-    "/products/{id}",
-    response_model=Product,
-    summary="Update a product",
-)
+@router.put("/products/{id}", response_model=Product)
 async def update_product(
     id: str,
-    payload: ProductUpdate,
+    title: Annotated[str, Form()],
+    category: Annotated[str, Form()],
+    description: Annotated[str, Form()],
+    # Виправлено: Form() замість Form(None)
+    care_notes: Annotated[Optional[str], Form()] = None,
+    # Виправлено: Form() замість Form(...)
+    delete_current_image: Annotated[bool, Form()] = False,
+    file: UploadFile = File(None),
     db: AsyncIOMotorDatabase = Depends(get_database),
 ):
+    """
+    Updates an existing product. Consumes multipart/form-data.
+    Handles image replacement or deletion.
+    """
     oid = _object_id_or_404(id)
-    update_data = payload.model_dump(exclude_unset=True)
-    if not update_data:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="No fields provided for update.",
-        )
-    result = await db["products"].update_one({"_id": oid}, {"$set": update_data})
-    if result.matched_count == 0:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Product with id '{id}' not found.",
-        )
-    updated = await db["products"].find_one({"_id": oid})
-    return Product(**updated)
+    current_product = await db["products"].find_one({"_id": oid})
 
+    if not current_product:
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    updated_data = {
+        "title": title.strip(),
+        "category": category,
+        "description": description.strip(),
+        "care_notes": care_notes.strip() if care_notes else None,
+    }
+
+    # Поточні зображення зберігаються як масив
+    current_images = current_product.get("images", [])
+    new_images = current_images
+
+    # Сценарій А: Завантажено НОВИЙ файл
+    if file and file.filename:
+        try:
+            urls = await upload_images([file])
+            new_images = urls  # Замінюємо старі фото на нове
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to process image: {str(e)}"
+            )
+
+    # Сценарій Б: Нового файлу немає, але стоїть прапорець "Видалити поточне"
+    elif delete_current_image:
+        new_images = []
+
+    updated_data["images"] = new_images
+
+    # Оновлюємо в БД
+    await db["products"].update_one(
+        {"_id": oid},
+        {"$set": updated_data}
+    )
+
+    # Повертаємо оновлений об'єкт
+    updated_product_doc = await db["products"].find_one({"_id": oid})
+    return Product(**updated_product_doc)
 
 @router.patch(
     "/products/{id}/toggle-active",
