@@ -175,42 +175,6 @@ resource "google_compute_security_policy" "armor_policy" {
   name        = "bloom-security-policy"
   description = "Комплексний захист WAF"
 
-  # 1. Захист від SQL-ін'єкцій (щоб ніхто не "зламав" запити до MongoDB)
-  rule {
-    action   = "deny(403)"
-    priority = 1000
-    match {
-      expr {
-        expression = "evaluatePreconfiguredExpr('sqli-v33-stable')"
-      }
-    }
-    description = "Блокувати SQL Injection"
-  }
-
-  # 2. Захист від міжсайтового скриптингу (XSS)
-  rule {
-    action   = "deny(403)"
-    priority = 1001
-    match {
-      expr {
-        expression = "evaluatePreconfiguredExpr('xss-v33-stable')"
-      }
-    }
-    description = "Блокувати XSS атаки"
-  }
-
-  # 3. Захист від віддаленого виконання коду (RCE) та включення файлів (LFI/RFI)
-  rule {
-    action   = "deny(403)"
-    priority = 1002
-    match {
-      expr {
-        expression = "evaluatePreconfiguredExpr('rce-v33-stable') || evaluatePreconfiguredExpr('lfi-v33-stable') || evaluatePreconfiguredExpr('rfi-v33-stable')"
-      }
-    }
-    description = "Блокувати RCE, LFI, RFI атаки"
-  }
-
   # 4. Забороняємо прямий доступ по IP
   rule {
     action   = "deny(404)"
